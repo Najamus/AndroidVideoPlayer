@@ -1,0 +1,75 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion COMPILESDKVERSION
+    buildToolsVersion BUILDTOOLSVERSION
+
+    lintOptions {
+        checkReleaseBuilds false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError false
+    }
+
+
+    defaultConfig {
+        applicationId "com.github.tcking.giraffeplayer.example"
+        minSdkVersion MINSDKVERSION
+        targetSdkVersion TARGETSDKVERSION
+        versionCode 1
+        versionName "1.0"
+
+        ndk {
+            abiFilters "armeabi-v7a","x86"
+        }
+    }
+    signingConfigs {
+        release {
+            storeFile file("../../mykeystore")
+            storePassword "123456"
+            keyAlias "os"
+            keyPassword "123456"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "com.android.support:recyclerview-v7:27.0.2"
+    implementation 'com.android.support:appcompat-v7:27.0.2'
+
+
+//    api 'com.github.tcking:giraffeplayer2:0.1.24-lazyLoad'
+    api project(':giraffeplayer2')
+
+    testImplementation 'junit:junit:4.12'
+}
+
+
+task depsize {
+    group 'Help'
+    description 'show dependencies aars size'
+    doLast {
+        final formatStr = "%,10.2f"
+        final conf = configurations._releaseApk
+        final size = conf.collect { it.length() / (1024 * 1024) }.sum()
+        final out = new StringBuffer()
+        out << 'Total dependencies size:'.padRight(50)
+        out << "${String.format(formatStr, size)} Mb\n\n"
+        conf.sort { -it.length() }
+                .each {
+            out << "${it.name}".padRight(50)
+            out << "${String.format(formatStr, (it.length() / 1024))} kb\n"
+        }
+        println(out)
+    }
+}
